@@ -12,6 +12,7 @@
   var currentChapterId = null;
   var validIds = new Set(COURSE.chapters.map(function (c) { return c.id; }));
   var completedChapters = Core.loadProgress(localStorage.getItem("hermes_completed"), validIds);
+  var bookmarkedChapters = Core.loadProgress(localStorage.getItem("hermes_bookmarked"), validIds);
   var userNotes = {};
   try {
     userNotes = JSON.parse(localStorage.getItem("hermes_notes") || "{}");
@@ -43,11 +44,23 @@
   var chapterSummary = document.getElementById("chapter-summary");
   var chapterContent = document.getElementById("chapter-content");
   var completeBtn = document.getElementById("complete-btn");
+  var bookmarkBtn = document.getElementById("bookmark-btn");
   var prevBtn = document.getElementById("prev-btn");
   var nextBtn = document.getElementById("next-btn");
 
   var notesArea = document.getElementById("notes");
   var notesStatus = document.getElementById("notes-status");
+  var exportNotesBtn = document.getElementById("export-notes-btn");
+  var headerExportNotes = document.getElementById("header-export-notes");
+  var backupBtn = document.getElementById("backup-btn");
+  var restoreBtn = document.getElementById("restore-btn");
+  var restoreInput = document.getElementById("restore-input");
+
+  var shortcutsBtn = document.getElementById("shortcuts-btn");
+  var shortcutsModal = document.getElementById("shortcuts-modal");
+  var closeModalBtn = document.getElementById("close-modal-btn");
+  var closeModalFooterBtn = document.getElementById("close-modal-footer-btn");
+
   var toast = document.getElementById("toast");
 
   function showToast(msg) {
@@ -57,6 +70,18 @@
     setTimeout(function () {
       toast.classList.remove("show");
     }, 2500);
+  }
+
+  function downloadFile(filename, text, mimeType) {
+    var blob = new Blob([text], { type: mimeType || "text/plain;charset=utf-8" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   }
 
   // Views Switching
@@ -93,23 +118,28 @@
     });
   });
 
-  // Populate Topics
+  // Populate Filter (Topics + Status)
   var topics = new Set();
   COURSE.chapters.forEach(function (ch) {
     if (ch.group) topics.add(ch.group);
   });
-  topics.forEach(function (t) {
-    var opt = document.createElement("option");
-    opt.value = t;
-    opt.textContent = t;
-    topicFilter.appendChild(opt);
-  });
+  if (topics.size > 0) {
+    var optGroup = document.createElement("optgroup");
+    optGroup.label = "主題分類 / Topics";
+    topics.forEach(function (t) {
+      var opt = document.createElement("option");
+      opt.value = t;
+      opt.textContent = t;
+      optGroup.appendChild(opt);
+    });
+    topicFilter.appendChild(optGroup);
+  }
 
   // Render Chapters
   function renderChapterList() {
     var q = searchInput.value;
-    var top = topicFilter.value;
-    var filtered = Core.filterChapters(COURSE.chapters, q, top);
+    var filterVal = topicFilter.value;
+    var filtered = Core.filterChapters(COURSE.chapters, q, filterVal, completedChapters, bookmarkedChapters);
     chapterList.innerHTML = "";
     chapterCount.textContent = filtered.length + " / " + COURSE.chapters.length + " 章";
 
@@ -119,9 +149,8 @@
     }
 
     filtered.forEach(function (ch) {
-      var item = document.createElement("button");
-      item.type = "button";
-      item.className = "chapter-item" + (ch.id === currentChapterId ? " active" : "") + (completedChapters.has(ch.id) ? " done" : "");
+      var item = document.createElement("div");
+      item.className = "chapter-item" + (ch.id === currentChapterId ? " active" : "") + (completedChapters.has(ch.id) ? " done" : "") + (bookmarkedChapters.has(ch.id) ? " bookmarked" : "");
       item.setAttribute("data-id", ch.id);
 
       var titleDiv = document.createElement("div");
@@ -134,9 +163,24 @@
       var timeSpan = document.createElement("span");
       timeSpan.className = "ch-time mono";
       timeSpan.textContent = ch.time;
+      titleDiv.appendChild(timeSpan);
+
+      var metaDiv = document.createElement("div");
+      metaDiv.className = "ch-meta-wrap";
+
+      var starBtn = document.createElement("button");
+      starBtn.type = "button";
+      starBtn.className = "star-btn";
+      starBtn.setAttribute("aria-label", "收藏章節");
+      starBtn.textContent = bookmarkedChapters.has(ch.id) ? "⭐" : "☆";
+      starBtn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        toggleBookmark(ch.id);
+      });
+      metaDiv.appendChild(starBtn);
 
       item.appendChild(titleDiv);
-      item.appendChild(timeSpan);
+      item.appendChild(metaDiv);
 
       item.addEventListener("click", function () {
         selectChapter(ch.id);
@@ -157,6 +201,32 @@
     progressBar.textContent = pct + "%";
     progressLabel.textContent = "已完成 " + done + " / " + total + " 章 (" + pct + "%)";
     localStorage.setItem("hermes_completed", JSON.stringify(Array.from(completedChapters)));
+    localStorage.setItem("hermes_bookmarked", JSON.stringify(Array.from(bookmarkedChapters)));
+  }
+
+  function toggleBookmark(id) {
+    if (!id) return;
+    if (bookmarkedChapters.has(id)) {
+      bookmarkedChapters.delete(id);
+      showToast("已取消收藏");
+    } else {
+      bookmarkedChapters.add(id);
+      showToast("已加入收藏！可在篩選中檢視");
+    }
+    updateProgress();
+    if (currentChapterId === id) updateBookmarkBtn();
+    renderChapterList();
+  }
+
+  function updateBookmarkBtn() {
+    if (!bookmarkBtn || !currentChapterId) return;
+    if (bookmarkedChapters.has(currentChapterId)) {
+      bookmarkBtn.classList.add("active");
+      bookmarkBtn.textContent = "⭐ 已收藏 (點擊取消)";
+    } else {
+      bookmarkBtn.classList.remove("active");
+      bookmarkBtn.textContent = "☆ 收藏本章 / Bookmark";
+    }
   }
 
   function selectChapter(id) {
@@ -223,7 +293,7 @@
       chapterContent.appendChild(b3);
     }
 
-    // Update buttons
+    // Update Complete Button
     if (completedChapters.has(id)) {
       completeBtn.classList.add("done");
       completeBtn.textContent = "✓ 已完成本章 (點擊取消)";
@@ -231,6 +301,9 @@
       completeBtn.classList.remove("done");
       completeBtn.textContent = "○ 標記為已完成 / Mark Done";
     }
+
+    // Update Bookmark Button
+    updateBookmarkBtn();
 
     // Pagination
     var idx = COURSE.chapters.findIndex(function (c) { return c.id === id; });
@@ -249,7 +322,7 @@
 
     // Load Notes
     notesArea.value = userNotes[id] || "";
-    notesStatus.textContent = userNotes[id] ? "已自動儲存" : "尚未填寫筆記";
+    notesStatus.textContent = userNotes[id] ? "已自動儲存 (" + userNotes[id].length + " 字)" : "尚未填寫筆記";
 
     renderChapterList();
   }
@@ -267,6 +340,13 @@
     updateProgress();
     selectChapter(currentChapterId);
   });
+
+  // Bookmark Button in lesson-actions
+  if (bookmarkBtn) {
+    bookmarkBtn.addEventListener("click", function () {
+      if (currentChapterId) toggleBookmark(currentChapterId);
+    });
+  }
 
   // Prev / Next
   prevBtn.addEventListener("click", function () {
@@ -297,8 +377,66 @@
     if (!currentChapterId) return;
     userNotes[currentChapterId] = notesArea.value;
     localStorage.setItem("hermes_notes", JSON.stringify(userNotes));
-    notesStatus.textContent = "已自動儲存於瀏覽器";
+    notesStatus.textContent = "已自動儲存 (" + userNotes[currentChapterId].length + " 字)";
   });
+
+  // Export Notes to Markdown
+  function handleExportNotes() {
+    var md = Core.exportNotesMarkdown(COURSE.chapters, userNotes, completedChapters, bookmarkedChapters);
+    downloadFile("Hermes_Masterclass_Study_Notes.md", md, "text/markdown;charset=utf-8");
+    showToast("已匯出個人實作筆記為 Markdown 檔");
+  }
+  if (exportNotesBtn) exportNotesBtn.addEventListener("click", handleExportNotes);
+  if (headerExportNotes) headerExportNotes.addEventListener("click", handleExportNotes);
+
+  // Backup Data (JSON)
+  if (backupBtn) {
+    backupBtn.addEventListener("click", function () {
+      var payload = {
+        version: "1.0",
+        exportedAt: new Date().toISOString(),
+        completed: Array.from(completedChapters),
+        bookmarked: Array.from(bookmarkedChapters),
+        notes: userNotes
+      };
+      downloadFile("hermes_learning_backup.json", JSON.stringify(payload, null, 2), "application/json;charset=utf-8");
+      showToast("學習進度與筆記已成功備份為 JSON 檔");
+    });
+  }
+
+  // Restore Data (JSON)
+  if (restoreBtn && restoreInput) {
+    restoreBtn.addEventListener("click", function () {
+      restoreInput.click();
+    });
+    restoreInput.addEventListener("change", function (e) {
+      var file = e.target.files && e.target.files[0];
+      if (!file) return;
+      var reader = new FileReader();
+      reader.onload = function (ev) {
+        try {
+          var data = JSON.parse(ev.target.result);
+          if (data.completed && Array.isArray(data.completed)) {
+            completedChapters = Core.loadProgress(data.completed, validIds);
+          }
+          if (data.bookmarked && Array.isArray(data.bookmarked)) {
+            bookmarkedChapters = Core.loadProgress(data.bookmarked, validIds);
+          }
+          if (data.notes && typeof data.notes === "object") {
+            userNotes = data.notes;
+            localStorage.setItem("hermes_notes", JSON.stringify(userNotes));
+          }
+          updateProgress();
+          if (currentChapterId) selectChapter(currentChapterId);
+          showToast("備份資料已成功匯入！");
+        } catch (err) {
+          alert("備份檔格式不正確，無法匯入。");
+        }
+      };
+      reader.readAsText(file);
+      restoreInput.value = "";
+    });
+  }
 
   // Search & Filter
   searchInput.addEventListener("input", renderChapterList);
@@ -306,7 +444,7 @@
 
   // Reset Progress
   resetProgressBtn.addEventListener("click", function () {
-    if (confirm("確定要重設所有章節的學習進度嗎？（筆記仍會保留）")) {
+    if (confirm("確定要重設所有章節的學習進度嗎？（筆記與收藏仍會保留）")) {
       completedChapters.clear();
       updateProgress();
       if (currentChapterId) selectChapter(currentChapterId);
@@ -334,6 +472,61 @@
       themeToggle.textContent = "☼";
     }
   }
+
+  // Shortcuts Modal Dialog
+  function openShortcuts() {
+    if (shortcutsModal) {
+      if (typeof shortcutsModal.showModal === "function") {
+        shortcutsModal.showModal();
+      } else {
+        shortcutsModal.setAttribute("open", "true");
+      }
+    }
+  }
+  function closeShortcuts() {
+    if (shortcutsModal) {
+      if (typeof shortcutsModal.close === "function") {
+        shortcutsModal.close();
+      } else {
+        shortcutsModal.removeAttribute("open");
+      }
+    }
+  }
+
+  if (shortcutsBtn) shortcutsBtn.addEventListener("click", openShortcuts);
+  if (closeModalBtn) closeModalBtn.addEventListener("click", closeShortcuts);
+  if (closeModalFooterBtn) closeModalFooterBtn.addEventListener("click", closeShortcuts);
+
+  // Global Keyboard Shortcuts
+  window.addEventListener("keydown", function (e) {
+    // If inside text fields, ignore most keys except Esc
+    var inInput = ["INPUT", "TEXTAREA", "SELECT"].indexOf(e.target.tagName) >= 0;
+    if (e.key === "Escape") {
+      closeShortcuts();
+      return;
+    }
+    if (inInput) return;
+
+    if (e.key === "j" || e.key === "J" || e.key === "]") {
+      nextBtn.click();
+    } else if (e.key === "k" || e.key === "K" || e.key === "[") {
+      prevBtn.click();
+    } else if (e.key === "m" || e.key === "M") {
+      completeBtn.click();
+    } else if (e.key === "s" || e.key === "S") {
+      if (currentChapterId) toggleBookmark(currentChapterId);
+    } else if (e.key === "/") {
+      e.preventDefault();
+      searchInput.focus();
+    } else if (e.key === "t" || e.key === "T") {
+      themeToggle.click();
+    } else if (e.key === "?") {
+      openShortcuts();
+    } else if (e.key >= "1" && e.key <= "5") {
+      var tabIdx = parseInt(e.key, 10) - 1;
+      if (tabButtons[tabIdx]) tabButtons[tabIdx].click();
+    }
+  });
 
   // --- Populate Architecture View ---
   var archNodes = document.getElementById("architecture-nodes");
@@ -378,9 +571,17 @@
       item.innerHTML = '<div class="row-between"><div><h3>' + tmpl.title + '</h3><p class="small muted">' + tmpl.description + '</p></div><button type="button" class="copy-btn quiet-button">複製代碼 / Copy</button></div><pre><code>' + escapeHtml(tmpl.code) + '</code></pre>';
       var copyBtn = item.querySelector(".copy-btn");
       copyBtn.addEventListener("click", function () {
-        navigator.clipboard.writeText(tmpl.code).then(function () {
-          showToast("已複製 " + tmpl.filename + " 至剪貼簿");
-        });
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(tmpl.code).then(function () {
+            showToast("已複製 " + tmpl.filename + " 至剪貼簿");
+          }).catch(function () {
+            downloadFile(tmpl.filename, tmpl.code, "text/markdown;charset=utf-8");
+            showToast("已下載 " + tmpl.filename);
+          });
+        } else {
+          downloadFile(tmpl.filename, tmpl.code, "text/markdown;charset=utf-8");
+          showToast("已下載 " + tmpl.filename);
+        }
       });
       templateList.appendChild(item);
     });
@@ -389,7 +590,10 @@
   // --- Populate Calculator View ---
   var offerForm = document.getElementById("offer-form");
   var offerTier = document.getElementById("offer-tier");
+  var offerCurrency = document.getElementById("offer-currency");
   var calcResults = document.getElementById("calculator-results");
+  var copyProposalBtn = document.getElementById("copy-proposal-btn");
+  var downloadProposalBtn = document.getElementById("download-proposal-btn");
 
   var tierPresets = {
     install: { clients: 5, setup: 1000, retainer: 300, cost: 50, hours: 6, hourly: 40, saved: 15, val: 40 },
@@ -414,26 +618,36 @@
     });
   }
 
+  if (offerCurrency) {
+    offerCurrency.addEventListener("change", updateCalculator);
+  }
+
+  function getCalculatorInputs() {
+    return {
+      clients: Number(document.getElementById("clients").value) || 0,
+      setup: Number(document.getElementById("setup").value) || 0,
+      retainer: Number(document.getElementById("retainer").value) || 0,
+      monthlyCost: Number(document.getElementById("monthly-cost").value) || 0,
+      deliveryHours: Number(document.getElementById("delivery-hours").value) || 0,
+      hourlyCost: Number(document.getElementById("hourly-cost").value) || 0,
+      savedHours: Number(document.getElementById("saved-hours").value) || 0,
+      clientHourlyValue: Number(document.getElementById("client-hourly-value").value) || 0
+    };
+  }
+
   function updateCalculator() {
     if (!offerForm || !calcResults) return;
-    var inp = {
-      clients: document.getElementById("clients").value,
-      setup: document.getElementById("setup").value,
-      retainer: document.getElementById("retainer").value,
-      monthlyCost: document.getElementById("monthly-cost").value,
-      deliveryHours: document.getElementById("delivery-hours").value,
-      hourlyCost: document.getElementById("hourly-cost").value,
-      savedHours: document.getElementById("saved-hours").value,
-      clientHourlyValue: document.getElementById("client-hourly-value").value
-    };
-    var res = Core.calculateOffer(inp);
+    var inp = getCalculatorInputs();
+    var curCode = offerCurrency ? offerCurrency.value : "USD";
+    var res = Core.calculateOffer(inp, curCode);
+    var sym = res.currency.symbol;
 
     calcResults.innerHTML = [
       '<div class="calc-metric-grid">',
-      '  <div class="metric-card"><span class="eyebrow">YEAR 1 ANNUAL REVENUE</span><div class="val accent">$' + res.annualRevenue.toLocaleString() + '</div><span class="small muted">預收 $' + res.upfrontRevenue.toLocaleString() + ' + 月費</span></div>',
-      '  <div class="metric-card"><span class="eyebrow">YEAR 1 GROSS PROFIT</span><div class="val">$' + res.yearOneGrossProfit.toLocaleString() + '</div><span class="small muted">毛利率 ' + res.grossMarginPct + '%</span></div>',
-      '  <div class="metric-card"><span class="eyebrow">CLIENT MONTHLY NET ROI</span><div class="val">$' + res.clientMonthlyNetValue.toLocaleString() + '</div><span class="small muted">每位客戶月省 $' + res.clientMonthlyGrossValue.toLocaleString() + ' - 月費</span></div>',
-      '  <div class="metric-card"><span class="eyebrow">MONTHLY RECURRING (MRR)</span><div class="val">$' + res.monthlyRevenue.toLocaleString() + '</div><span class="small muted">' + inp.clients + ' 位客戶穩定現金流</span></div>',
+      '  <div class="metric-card"><span class="eyebrow">YEAR 1 ANNUAL REVENUE</span><div class="val accent">' + sym + res.annualRevenue.toLocaleString() + '</div><span class="small muted">預收 ' + sym + res.upfrontRevenue.toLocaleString() + ' + 月費總計</span></div>',
+      '  <div class="metric-card"><span class="eyebrow">YEAR 1 GROSS PROFIT</span><div class="val">' + sym + res.yearOneGrossProfit.toLocaleString() + '</div><span class="small muted">毛利率 ' + res.grossMarginPct + '%</span></div>',
+      '  <div class="metric-card"><span class="eyebrow">CLIENT MONTHLY NET ROI</span><div class="val">' + sym + res.clientMonthlyNetValue.toLocaleString() + '</div><span class="small muted">每位客戶月省 ' + sym + res.clientMonthlyGrossValue.toLocaleString() + ' - 月費</span></div>',
+      '  <div class="metric-card"><span class="eyebrow">MONTHLY RECURRING (MRR)</span><div class="val">' + sym + res.monthlyRevenue.toLocaleString() + '</div><span class="small muted">' + inp.clients + ' 位客戶每月穩定現金流</span></div>',
       '</div>'
     ].join("");
   }
@@ -441,6 +655,37 @@
   if (offerForm) {
     offerForm.addEventListener("input", updateCalculator);
     updateCalculator();
+  }
+
+  if (copyProposalBtn) {
+    copyProposalBtn.addEventListener("click", function () {
+      var inp = getCalculatorInputs();
+      var curCode = offerCurrency ? offerCurrency.value : "USD";
+      var res = Core.calculateOffer(inp, curCode);
+      var text = Core.generateOfferProposal(inp, res);
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function () {
+          showToast("已複製商業提案建議書至剪貼簿！");
+        }).catch(function () {
+          downloadFile("Hermes_Agent_Deployment_Proposal.md", text, "text/markdown;charset=utf-8");
+          showToast("已下載商業提案建議書檔案！");
+        });
+      } else {
+        downloadFile("Hermes_Agent_Deployment_Proposal.md", text, "text/markdown;charset=utf-8");
+        showToast("已下載商業提案建議書檔案！");
+      }
+    });
+  }
+
+  if (downloadProposalBtn) {
+    downloadProposalBtn.addEventListener("click", function () {
+      var inp = getCalculatorInputs();
+      var curCode = offerCurrency ? offerCurrency.value : "USD";
+      var res = Core.calculateOffer(inp, curCode);
+      var text = Core.generateOfferProposal(inp, res);
+      downloadFile("Hermes_Agent_Deployment_Proposal.md", text, "text/markdown;charset=utf-8");
+      showToast("已下載商業提案建議書！");
+    });
   }
 
   // --- Populate Quiz View ---
@@ -468,7 +713,7 @@
       optsDiv.className = "quiz-options";
       q.options.forEach(function (opt, oIdx) {
         var label = document.createElement("label");
-        label.className = "quiz-opt-label";
+        label.className = "quiz-option";
         var radio = document.createElement("input");
         radio.type = "radio";
         radio.name = "quiz_ans_" + q.id;
