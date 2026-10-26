@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#171917">
+  <meta name="description" content="Danny 的 Hermes Agent 學習工作台：章節導覽、實作筆記、架構、範本與自我檢核。">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; frame-src https://www.youtube-nocookie.com; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
+  <title>Hermes / Learn — Danny 的學習工作台</title>
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+  <link rel="stylesheet" href="assets/style.css">
+  <script src="assets/content.js" defer></script>
+  <script src="assets/core.js" defer></script>
+  <script src="assets/app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">跳至學習內容 / Skip to content</a>
+  <div class="app-shell">
+    <aside id="sidebar" class="sidebar" aria-label="章節導覽 / Chapters">
+      <a class="brand" href="./" aria-label="Hermes Learn 首頁"><img src="assets/favicon.svg" alt="" width="36" height="36"><span>HERMES<span class="brand-sub">LEARNING WORKSPACE</span></span></a>
+      <div class="sidebar-heading"><span class="eyebrow">COURSE INDEX</span><span id="chapter-count" class="count">載入中</span></div>
+      <label class="field-label" for="topic-filter">學習主題 <span>Topic</span></label>
+      <select id="topic-filter"><option value="all">所有主題 / All topics</option></select>
+      <nav id="chapter-list" class="chapter-list" aria-label="課程章節"><p class="empty">正在準備章節導覽…</p></nav>
+      <div class="progress-card">
+        <div class="row-between"><span class="eyebrow">YOUR PROGRESS</span><span class="local-dot">LOCAL</span></div>
+        <label id="progress-label" for="progress-bar">尚未完成任何章節</label>
+        <progress id="progress-bar" max="100" value="0">0%</progress>
+        <p class="small muted">一章、一個實作，慢慢累積。<br>進度與筆記僅保存在此瀏覽器。</p>
+        <button id="reset-progress" type="button" class="quiet-button">重設進度 / Reset</button>
+      </div>
+      <p class="sidebar-foot">FOR DANNY <span>·</span> LEARN BY DOING</p>
+    </aside>
+
+    <div class="workspace">
+      <header class="workspace-header">
+        <div class="toolbar">
+          <div class="workspace-label"><button id="menu-toggle" class="icon-button" type="button" aria-expanded="false" aria-controls="sidebar" aria-label="開啟或關閉章節導覽">☰</button><span>Workspace <span class="muted">/</span> <strong>Learn</strong></span></div>
+          <div class="header-tools"><div class="search-field"><label class="sr-only" for="search">搜尋章節 / Search chapters</label><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="搜尋章節、關鍵字…" autocomplete="off"></div><button id="theme-toggle" class="icon-button" type="button" aria-label="切換明暗主題" title="切換明暗主題">◐</button></div>
+        </div>
+        <div class="header-bottom"><div class="view-tabs" role="tablist" aria-label="學習工具 / Learning tools">
+          <button id="tab-course" data-view="course" role="tab" aria-selected="true" aria-controls="view-course" type="button" class="active">課程 <span>Learn</span></button>
+          <button id="tab-architecture" data-view="architecture" role="tab" aria-selected="false" aria-controls="view-architecture" type="button" tabindex="-1">架構 <span>Architecture</span></button>
+          <button id="tab-templates" data-view="templates" role="tab" aria-selected="false" aria-controls="view-templates" type="button" tabindex="-1">範本 <span>Templates</span></button>
+          <button id="tab-calculator" data-view="calculator" role="tab" aria-selected="false" aria-controls="view-calculator" type="button" tabindex="-1">試算 <span>Calculator</span></button>
+          <button id="tab-quiz" data-view="quiz" role="tab" aria-selected="false" aria-controls="view-quiz" type="button" tabindex="-1">自我檢核 <span>Quiz</span></button>
+        </div><span class="independent-tag">獨立學習輔助 · 非官方認證</span></div>
+      </header>
+
+      <main id="main" class="main-content" tabindex="-1">
+        <noscript><div class="notice"><h2>不啟用 JavaScript，也能開始學習</h2><p>章節切換、筆記儲存與試算需啟用 JavaScript；此頁不會自動載入外部影片。請直接觀看 <a href="https://www.youtube.com/watch?v=8yE6G1Lup1s" target="_blank" rel="noopener noreferrer">Samin Yasar 的完整課程</a>，並搭配 <a href="https://hermes-agent.nousresearch.com/docs/" target="_blank" rel="noopener noreferrer">Hermes 官方文件</a>。建議順序：理解 agent 與模型的差別 → 安裝並檢查權限 → 用低風險任務練習 → 記錄與反思。筆記可先寫在自己的文字檔；勿放入密碼或 API 金鑰。</p></div></noscript>
+
+        <section id="view-course" role="tabpanel" aria-labelledby="tab-course">
+          <div class="course-intro"><div><p class="eyebrow accent"><span class="status-dot"></span> THE HERMES MASTERCLASS / STUDY COMPANION</p><h1>從理解，到真正<span class="heading-accent">動手。</span></h1><p class="intro-copy">Danny，歡迎回到你的學習工作台。跟著章節探索 Hermes Agent，<br class="desktop-break">把每個概念變成可驗證的小練習。</p></div><div class="course-stamp"><span class="stamp-mark" aria-hidden="true">H /</span><span>SAMIN YASAR<br>BUILD &amp; SELL · ~3 HOURS</span></div></div>
+          <div class="course-grid">
+            <div class="lesson-column">
+              <section class="video-card" aria-labelledby="video-heading"><div class="panel-bar"><h2 id="video-heading">課程影片 <span>Course video</span></h2><span class="mono muted">YOUTUBE / EXTERNAL</span></div><div class="video-stage"><iframe id="video-frame" src="about:blank" title="YouTube course" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div><div class="video-consent"><div><p class="consent-heading">準備好，再按播放。</p><p id="video-status" role="status" class="small muted">尚未連線至 YouTube。載入後將與第三方服務連線；影片可能受網路限制。</p></div><button id="load-video" type="button" class="primary-button"><span aria-hidden="true">▶</span> 載入影片 / Load video</button></div><div class="video-controls"><div class="timestamp-control"><label for="timestamp-input">跳至時間 <span class="muted">Timestamp</span></label><div class="input-action"><input id="timestamp-input" type="text" value="0:00" placeholder="hh:mm:ss" inputmode="text" aria-describedby="timestamp-help"><button id="timestamp-jump" type="button">跳轉 ↗</button></div><span id="timestamp-help" class="small muted">格式 mm:ss 或 hh:mm:ss</span></div><a id="video-link" class="external-link" href="https://www.youtube.com/watch?v=8yE6G1Lup1s" target="_blank" rel="noopener noreferrer">在 YouTube 開啟 ↗</a></div></section>
+              <article class="lesson-card" aria-labelledby="chapter-title"><div class="row-between"><p class="eyebrow">SELECTED CHAPTER / 本章學習</p><div id="chapter-meta" class="chapter-meta">由左側選擇章節</div></div><h2 id="chapter-title">你的第一個學習步驟</h2><p id="chapter-summary" class="lesson-summary">先理解概念，再用安全、可控的小任務驗證。章節載入後，這裡會顯示原創補充摘要與實作提示。</p><div id="chapter-content"><div class="lesson-block"><h3>如何使用這個工作台</h3><ol class="steps"><li>從左側選一個章節，閱讀重點與練習。</li><li>按「載入影片」觀看，或開啟 YouTube 外部連結。</li><li>寫下自己的理解，完成後標記進度。</li></ol></div></div><div class="lesson-actions"><button id="complete-btn" type="button" class="primary-button">✓ 標記完成 / Mark complete</button><div class="chapter-pagination"><button id="prev-btn" type="button">← 上一章</button><button id="next-btn" type="button">下一章 →</button></div></div></article>
+            </div>
+            <aside class="study-rail" aria-label="學習筆記與提示"><section class="notes-card"><div class="panel-bar"><h2><label for="notes">本章筆記 <span>My notes</span></label></h2><span class="mono muted">01 / REFLECT</span></div><p class="small muted">用自己的話寫下：學到了什麼？下一步想試什麼？</p><textarea id="notes" rows="12" placeholder="今天的一個發現…&#10;&#10;我要嘗試的小任務…&#10;&#10;還不確定的問題…" aria-describedby="notes-status notes-privacy"></textarea><p id="notes-status" role="status" class="small muted">筆記會自動保存在此瀏覽器。</p><p id="notes-privacy" class="privacy-note">LOCAL ONLY · 請勿記錄密碼、金鑰或敏感資料。清除瀏覽器資料也會清除筆記。</p></section><section class="practice-card"><p class="eyebrow accent">A SMALL REMINDER</p><h2>先做小，再做對。</h2><p>先在測試環境驗證權限與結果，再考慮自動化。交易只做模擬；醫療案例僅供學習，不代替專業判斷。</p><a class="external-link" href="https://hermes-agent.nousresearch.com/docs/" target="_blank" rel="noopener noreferrer">查閱最新官方文件 ↗</a></section><div class="rail-end mono">UNDERSTAND → BUILD → REFLECT</div></aside>
+          </div>
+        </section>
+
+        <section id="view-architecture" role="tabpanel" aria-labelledby="tab-architecture" hidden><div class="view-heading"><p class="eyebrow accent">02 / SYSTEM MAP</p><h1>理解系統，才知道怎麼用。</h1><p class="intro-copy">選擇架構節點，探索模型、工具、記憶與 agent harness 的分工。</p></div><div class="architecture-grid"><div id="architecture-nodes" aria-label="架構節點" class="architecture-nodes"></div><article id="architecture-detail" class="detail-panel" aria-live="polite"><h2>選一個節點開始</h2><p class="muted">從模型到執行流程，逐一釐清彼此的責任。</p></article></div></section>
+        <section id="view-templates" role="tabpanel" aria-labelledby="tab-templates" hidden><div class="view-heading"><p class="eyebrow accent">03 / PRACTICAL LIBRARY</p><h1>好起點，不是萬用答案。</h1><p class="intro-copy">先理解範本，再依你的需求修改。複製或下載後自行檢查；此網站不會執行任何指令。</p></div><div id="template-list" class="template-list"></div><div class="notice small">公開範本不得填入真實憑證。課程使用的 soul.md / user.md 術語，請對照目前官方文件的 SOUL.md / USER.md。</div></section>
+        <section id="view-calculator" role="tabpanel" aria-labelledby="tab-calculator" hidden><div class="view-heading"><p class="eyebrow accent">04 / OFFER WORKBENCH</p><h1>先算清楚，再談價值。</h1><p class="intro-copy">用可調整的假設拆解服務成本。以下均以 USD 計價，僅作學習示例，非市場行情或收益保證。</p></div><div class="calculator-layout"><form id="offer-form" class="calculator-form"><h2>服務假設 <span class="muted">Inputs</span></h2><label for="offer-tier">服務層級 / Service tier</label><select id="offer-tier"><option value="install">安裝設定 / Installation</option><option value="functional">功能交付 / Functional agent</option><option value="workforce">工作流程團隊 / AI workforce</option></select><div class="form-grid"><div><label for="clients">客戶數 / Clients</label><input id="clients" type="number" value="3" min="0" max="100" step="1" required></div><div><label for="setup">每位客戶設定費 / Setup USD</label><input id="setup" type="number" value="2000" min="0" step="any" required></div><div><label for="retainer">每位客戶月費 / Retainer USD</label><input id="retainer" type="number" value="500" min="0" step="any" required></div><div><label for="monthly-cost">每位客戶月成本 / Cost USD</label><input id="monthly-cost" type="number" value="100" min="0" step="any" required></div><div><label for="delivery-hours">每位客戶交付工時 / Hours</label><input id="delivery-hours" type="number" value="10" min="0" step="any" required></div><div><label for="hourly-cost">你的每小時成本 / USD</label><input id="hourly-cost" type="number" value="40" min="0" step="any" required></div><div><label for="saved-hours">客戶每月節省工時 / Hours</label><input id="saved-hours" type="number" value="20" min="0" step="any" required></div><div><label for="client-hourly-value">客戶每小時價值 / USD</label><input id="client-hourly-value" type="number" value="50" min="0" step="any" required></div></div><p class="small muted">月成本以「每位客戶」計算。變更數值即可更新；稅、獲客、維護與風險成本未必包含在內。</p></form><div id="calculator-results" class="calculator-results" aria-live="polite"><p class="empty">試算工具載入後會顯示結果。</p></div></div></section>
+        <section id="view-quiz" role="tabpanel" aria-labelledby="tab-quiz" hidden><div class="view-heading"><p class="eyebrow accent">05 / CHECK YOUR UNDERSTANDING</p><h1>不是考試，是確認理解。</h1><p class="intro-copy">先選答案，再查看解析。答錯的地方，就是下一個值得回看的章節。</p></div><div id="quiz-list" class="quiz-list"></div><div class="quiz-actions"><button id="quiz-grade" type="button" class="primary-button">檢查答案 / Check answers</button><button id="quiz-reset" type="button">重新作答 / Try again</button></div><div id="quiz-result" aria-live="polite" class="quiz-result"></div></section>
+
+        <section class="provenance" aria-labelledby="provenance-title"><h2 id="provenance-title">關於這份學習輔助 <span>Source &amp; provenance</span></h2><p>課程與影片歸 Samin Yasar 所有；Hermes Agent 由 Nous Research 開發。本工作台為 Danny 製作，非官方產品或認證。章節時間取自已核對的影片發布者章節資料；補充摘要、練習與自我檢核為原創整理，並非逐字稿。未核實完整影片逐字稿，不宣稱逐句審閱。設定與功能請以最新官方文件為準。</p></section>
+        <footer class="footer"><span>HERMES / LEARN <span class="muted">· Built for deliberate practice.</span></span><nav aria-label="外部參考資料"><a href="https://hermes-agent.nousresearch.com/docs/" target="_blank" rel="noopener noreferrer">官方文件 ↗</a><a href="https://www.youtube.com/watch?v=8yE6G1Lup1s" target="_blank" rel="noopener noreferrer">原始課程 ↗</a><a href="https://github.com/NousResearch/hermes-agent" target="_blank" rel="noopener noreferrer">官方 GitHub ↗</a></nav></footer>
+      </main>
+    </div>
+  </div>
+  <div id="toast" role="status" aria-live="polite" class="toast"></div>
+</body>
+</html>
